@@ -1,0 +1,24 @@
+{
+  "schema": "design-pipeline.state.v1",
+  "changeId": "workflow-interaction-detection-20260704",
+  "status": "complete",
+  "phase": "qa-complete",
+  "motion": {
+    "required": true,
+    "motionSpec": "design/changes/workflow-interaction-detection-20260704/motion.md",
+    "implementation": "CSS + GSAP + Anime.js",
+    "reducedMotion": "implemented"
+  },
+  "evidence": [
+    "design/changes/workflow-interaction-detection-20260704/brief.md",
+    "design/changes/workflow-interaction-detection-20260704/design.md",
+    "design/changes/workflow-interaction-detection-20260704/motion.md",
+    "design/changes/workflow-interaction-detection-20260704/tasks.md",
+    "design/changes/workflow-interaction-detection-20260704/qa.md",
+    "design/changes/workflow-interaction-detection-20260704/handoff.md"
+  ],
+  "nextActions": [
+    "Manual feel review in the in-app browser",
+    "Tune nearDistance threshold if dense workflows feel too chatty"
+  ]
+}

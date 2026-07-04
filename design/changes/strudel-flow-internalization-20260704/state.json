@@ -1,0 +1,27 @@
+{
+  "schema": "design-pipeline.state.v1",
+  "changeId": "strudel-flow-internalization-20260704",
+  "status": "complete",
+  "phase": "qa-complete",
+  "source": "https://github.com/xyflow/strudel-flow",
+  "keptPatterns": [
+    "connected-components",
+    "compressed-url-state"
+  ],
+  "rejectedPatterns": [
+    "music-runtime",
+    "instrument-nodes",
+    "pattern-playback"
+  ],
+  "evidence": [
+    "design/changes/strudel-flow-internalization-20260704/brief.md",
+    "design/changes/strudel-flow-internalization-20260704/design.md",
+    "design/changes/strudel-flow-internalization-20260704/tasks.md",
+    "design/changes/strudel-flow-internalization-20260704/qa.md",
+    "design/changes/strudel-flow-internalization-20260704/handoff.md"
+  ],
+  "nextActions": [
+    "Consider connected-component run scope in Run Trace",
+    "Consider share URL size guard for larger workflows"
+  ]
+}

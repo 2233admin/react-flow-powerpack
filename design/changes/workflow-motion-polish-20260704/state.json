@@ -1,0 +1,25 @@
+{
+  "schema": "design-pipeline.state.v1",
+  "changeId": "workflow-motion-polish-20260704",
+  "status": "complete",
+  "phase": "qa-complete",
+  "motion": {
+    "required": true,
+    "motionSpec": "design/changes/workflow-motion-polish-20260704/motion.md",
+    "implementation": "CSS",
+    "reducedMotion": "implemented"
+  },
+  "evidence": [
+    "design/changes/workflow-motion-polish-20260704/brief.md",
+    "design/changes/workflow-motion-polish-20260704/design.md",
+    "design/changes/workflow-motion-polish-20260704/motion.md",
+    "design/changes/workflow-motion-polish-20260704/tasks.md",
+    "design/changes/workflow-motion-polish-20260704/qa.md",
+    "design/changes/workflow-motion-polish-20260704/qa/screenshots/canvas-1440x900-final.png",
+    "design/changes/workflow-motion-polish-20260704/handoff.md"
+  ],
+  "nextActions": [
+    "Manual feel review in the in-app browser",
+    "If approved, apply the same motion-token pattern to Run Trace waveform and Agent proposal transitions"
+  ]
+}

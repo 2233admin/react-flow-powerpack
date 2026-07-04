@@ -1,0 +1,2 @@
+{"timestamp":"2026-07-04T17:34:00+08:00","phase":"implementation","event":"Added GSAP and Anime.js dependencies; implemented partial selection and drag interaction probe."}
+{"timestamp":"2026-07-04T17:37:00+08:00","phase":"qa","event":"Typecheck, tests, build, and Playwright partial-selection/drag-interaction QA passed."}
