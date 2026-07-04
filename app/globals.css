@@ -402,6 +402,108 @@
   filter: drop-shadow(0 0 6px rgb(255 122 23 / 0.24));
 }
 
+.workflow-inspector-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #3b414a transparent;
+}
+
+.workflow-inspector-scroll::-webkit-scrollbar {
+  width: 9px;
+}
+
+.workflow-inspector-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.workflow-inspector-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #3b414a;
+  background-clip: padding-box;
+}
+
+.workflow-inspector-scroll::-webkit-scrollbar-thumb:hover {
+  background: #59616d;
+  background-clip: padding-box;
+}
+
+.houdini-range {
+  height: 1rem;
+  appearance: none;
+  background: transparent;
+}
+
+.houdini-range:focus {
+  outline: none;
+}
+
+.houdini-range::-webkit-slider-runnable-track {
+  height: 0.25rem;
+  border: 1px solid #303641;
+  border-radius: 2px;
+  background: #11151b;
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.45);
+}
+
+.houdini-range::-webkit-slider-thumb {
+  width: 0.7rem;
+  height: 1.05rem;
+  margin-top: -0.47rem;
+  appearance: none;
+  border: 1px solid #a5aeb9;
+  border-radius: 2px;
+  background: linear-gradient(#8793a1, #66717f);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45);
+}
+
+.houdini-range:focus::-webkit-slider-thumb {
+  border-color: #d1d7df;
+}
+
+.houdini-range::-moz-range-track {
+  height: 0.25rem;
+  border: 1px solid #303641;
+  border-radius: 2px;
+  background: #11151b;
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.45);
+}
+
+.houdini-range::-moz-range-thumb {
+  width: 0.7rem;
+  height: 1.05rem;
+  border: 1px solid #a5aeb9;
+  border-radius: 2px;
+  background: linear-gradient(#8793a1, #66717f);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45);
+}
+
+.houdini-checkbox {
+  width: 0.78rem;
+  height: 0.78rem;
+  appearance: none;
+  border: 1px solid #3a414b;
+  border-radius: 2px;
+  background: #050607;
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.55);
+}
+
+.houdini-checkbox:checked {
+  border-color: #a5aeb9;
+  background:
+    linear-gradient(135deg, transparent 0 35%, #d5dbe2 35% 50%, transparent 50%),
+    linear-gradient(45deg, transparent 0 42%, #d5dbe2 42% 56%, transparent 56%),
+    #29313a;
+}
+
+.houdini-checkbox:focus-visible {
+  outline: 1px solid #7c8795;
+  outline-offset: 2px;
+}
+
+.houdini-checkbox:disabled {
+  opacity: 0.55;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .workflow-node-card,
   .workflow-node-card:hover,

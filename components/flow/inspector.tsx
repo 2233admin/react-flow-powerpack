@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Select,
   SelectContent,
@@ -16,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { getNodeInternals, type NodeInternalStatus } from "@/lib/workflow/node-internals"
 import { getNodeContract } from "@/lib/workflow/node-contracts"
 import { getNodeTemplate } from "@/lib/workflow/node-templates"
@@ -60,6 +58,20 @@ const internalStatusClass: Record<NodeInternalStatus, string> = {
   simulated: "border-[#a0c3ec]/30 bg-[#a0c3ec]/10 text-[#a0c3ec]",
   future: "border-border bg-muted text-muted-foreground",
 }
+
+const houdiniInputClass =
+  "h-7 rounded-[2px] border-[#2c3036] bg-[#07080a] px-2 font-mono text-[11px] text-foreground shadow-inner outline-none transition-colors placeholder:text-muted-foreground/45 focus-visible:border-[#5f6976] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-60 read-only:opacity-80"
+
+const houdiniSelectTriggerClass =
+  "h-7 rounded-[2px] border-[#2c3036] bg-[#07080a] px-2 font-mono text-[11px] shadow-inner focus:ring-0 focus:ring-offset-0"
+
+const houdiniTextareaClass =
+  "min-h-20 rounded-[2px] border-[#2c3036] bg-[#07080a] px-2 py-1.5 font-mono text-[11px] leading-relaxed shadow-inner focus-visible:ring-0 focus-visible:ring-offset-0"
+
+const houdiniDetailsClass = "overflow-hidden rounded-[3px] border border-[#20242a] bg-[#111317]/74"
+
+const houdiniSummaryClass =
+  "flex cursor-pointer list-none items-center justify-between gap-3 bg-[#171a1f] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground"
 
 function SectionCaption({ children }: { children: React.ReactNode }) {
   return (
@@ -128,7 +140,12 @@ function PanelShell({
           <X className="size-3.5" />
         </button>
       </div>
-      <ScrollArea className="flex-1">{children}</ScrollArea>
+      <div
+        data-inspector-scroll
+        className="workflow-inspector-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
+      >
+        {children}
+      </div>
     </aside>
   )
 }
@@ -207,7 +224,13 @@ export function Inspector() {
               </Label>
               <p className="text-[11px] text-muted-foreground">显示流向的虚线动画</p>
             </div>
-            <Switch id="edge-anim" checked={!!edge.animated} onCheckedChange={() => toggleEdgeAnimated(edge.id)} />
+            <input
+              id="edge-anim"
+              type="checkbox"
+              checked={!!edge.animated}
+              onChange={() => toggleEdgeAnimated(edge.id)}
+              className="houdini-checkbox"
+            />
           </div>
 
           <Separator />
@@ -274,11 +297,14 @@ export function Inspector() {
     const raw = field.value
     const fieldId = `parameter-${field.id}`
     const label = (
-      <div className="space-y-1">
-        <Label htmlFor={fieldId} className="font-mono text-[10px] uppercase tracking-wider">
+      <div className="min-w-0 pt-1 text-right">
+        <Label
+          htmlFor={fieldId}
+          title={field.description}
+          className="block truncate font-mono text-[10px] uppercase tracking-[0.04em] text-muted-foreground"
+        >
           {field.label}
         </Label>
-        {field.description ? <p className="text-[11px] leading-relaxed text-muted-foreground">{field.description}</p> : null}
       </div>
     )
     const readonlyTone = field.readonly ? "opacity-70" : ""
@@ -286,7 +312,7 @@ export function Inspector() {
       <div
         key={field.id}
         className={cn(
-          "grid grid-cols-[112px_minmax(0,1fr)] gap-3 border-b border-border/60 py-3 last:border-b-0",
+          "grid grid-cols-[118px_minmax(0,1fr)] gap-3 border-b border-[#24282f] px-1 py-2 last:border-b-0",
           align,
           readonlyTone,
         )}
@@ -299,12 +325,14 @@ export function Inspector() {
     if (field.type === "boolean") {
       const checked = raw === true || raw === "true"
       return row(
-        <div className="flex h-8 items-center justify-end">
-          <Switch
+        <div className="flex h-7 items-center">
+          <input
             id={fieldId}
+            type="checkbox"
             checked={checked}
             disabled={field.readonly}
-            onCheckedChange={(checkedValue) => updateParameterField(field, checkedValue)}
+            onChange={(event) => updateParameterField(field, event.target.checked)}
+            className="houdini-checkbox"
           />
         </div>,
         "items-center",
@@ -315,10 +343,15 @@ export function Inspector() {
       const value = typeof raw === "string" ? raw : field.options?.[0]?.value
       return row(
         field.readonly ? (
-          <Input id={fieldId} readOnly value={field.options?.find((option) => option.value === value)?.label ?? value ?? ""} className="h-8 font-mono text-xs" />
+          <Input
+            id={fieldId}
+            readOnly
+            value={field.options?.find((option) => option.value === value)?.label ?? value ?? ""}
+            className={houdiniInputClass}
+          />
         ) : (
           <Select value={value} onValueChange={(next) => updateParameterField(field, next)}>
-            <SelectTrigger id={fieldId} className="h-8">
+            <SelectTrigger id={fieldId} className={houdiniSelectTriggerClass}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -339,7 +372,7 @@ export function Inspector() {
             id={fieldId}
             rows={3}
             readOnly={field.readonly}
-            className="font-mono text-xs"
+            className={houdiniTextareaClass}
             value={typeof raw === "string" ? raw : ""}
             onChange={(e) => updateParameterField(field, e.target.value)}
           />,
@@ -355,7 +388,7 @@ export function Inspector() {
             : [],
       )
       return row(
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {(field.options ?? []).map((option) => {
             const selectedToken = selectedValues.has(option.value)
             return (
@@ -370,8 +403,10 @@ export function Inspector() {
                   updateParameterField(field, Array.from(next))
                 }}
                 className={cn(
-                  "rounded-sm border px-2 py-1 font-mono text-[10px] transition-colors disabled:pointer-events-none disabled:opacity-60",
-                  selectedToken ? "border-[#ff7a17] bg-[#ff7a17]/10 text-[#ff7a17]" : "text-muted-foreground hover:text-foreground",
+                  "h-6 rounded-[2px] border px-2 font-mono text-[10px] transition-colors disabled:pointer-events-none disabled:opacity-60",
+                  selectedToken
+                    ? "border-[#8694a5] bg-[#2b3138] text-foreground"
+                    : "border-[#2c3036] bg-[#07080a] text-muted-foreground hover:border-[#4a515c] hover:text-foreground",
                 )}
               >
                 {option.label}
@@ -386,8 +421,8 @@ export function Inspector() {
       const value = typeof raw === "number" ? raw : Number(raw ?? field.min ?? 0)
       const safeValue = Number.isFinite(value) ? value : field.min ?? 0
       return row(
-        <div className="space-y-1.5 pt-1">
-          <div className="flex items-center gap-3">
+        <div className="flex h-7 items-center gap-2">
+          <div className="min-w-0 flex-1">
             <input
               id={fieldId}
               type="range"
@@ -397,11 +432,22 @@ export function Inspector() {
               value={safeValue}
               disabled={field.readonly}
               onChange={(e) => updateParameterField(field, Number(e.target.value))}
-              className="min-w-0 flex-1 accent-[#ff7a17] disabled:opacity-60"
+              className="houdini-range w-full disabled:opacity-60"
             />
-            <span className="w-10 text-right font-mono text-[11px] text-foreground">{safeValue.toFixed(2)}</span>
           </div>
+          <Input
+            type="number"
+            min={field.min ?? 0}
+            max={field.max ?? 1}
+            step={field.step ?? 0.01}
+            value={safeValue}
+            readOnly={field.readonly}
+            onChange={(e) => updateParameterField(field, Number(e.target.value))}
+            className={cn(houdiniInputClass, "h-7 w-[4.25rem] px-1.5 text-right")}
+            aria-label={`${field.label} numeric value`}
+          />
         </div>,
+        "items-center",
       )
     }
 
@@ -417,7 +463,7 @@ export function Inspector() {
             readOnly={field.readonly}
             value={Number.isFinite(value) ? value : 0}
             onChange={(e) => updateParameterField(field, Number(e.target.value))}
-            className="h-8 font-mono text-xs"
+            className={houdiniInputClass}
           />,
       )
     }
@@ -429,7 +475,7 @@ export function Inspector() {
           placeholder={field.placeholder}
           readOnly={field.readonly}
           onChange={(e) => updateParameterField(field, e.target.value)}
-          className="h-8 font-mono text-xs"
+          className={houdiniInputClass}
         />,
     )
   }
@@ -527,23 +573,25 @@ export function Inspector() {
         ) : (
           <>
         {parameterInterfaceView ? (
-          <div className="overflow-hidden rounded-md border bg-card/60">
-            <div className="flex flex-wrap gap-1 border-b bg-muted/60 p-1 font-mono text-[10px] uppercase">
+          <div className="overflow-hidden rounded-[3px] border border-[#20242a] bg-[#101216]/84">
+            <div className="flex flex-wrap gap-0 border-b border-[#24282f] bg-[#1d2025] p-0 font-mono text-[10px] uppercase">
               {parameterGroups.map((group) => (
                 <button
                   key={group.id}
                   type="button"
                   onClick={() => setParameterGroupTab(group.id)}
                   className={cn(
-                    "rounded-sm px-2 py-1 transition-colors",
-                    activeParameterGroupId === group.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                    "border-r border-[#2b3037] px-3 py-1.5 transition-colors",
+                    activeParameterGroupId === group.id
+                      ? "bg-[#07080a] text-foreground"
+                      : "text-muted-foreground hover:bg-[#252a31] hover:text-foreground",
                   )}
                 >
                   {group.label}
                 </button>
               ))}
             </div>
-            <div className="px-3">{activeParameterFields.map((field) => renderParameterField(field))}</div>
+            <div className="px-2 py-1">{activeParameterFields.map((field) => renderParameterField(field))}</div>
             {activeParameterFields.length === 0 ? (
               <p className="px-3 py-4 text-[11px] text-muted-foreground">No public parameters in this group.</p>
             ) : null}
@@ -551,8 +599,8 @@ export function Inspector() {
         ) : null}
 
         {nodeContract ? (
-          <details className="overflow-hidden rounded-md border bg-card/50">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+          <details className={houdiniDetailsClass}>
+            <summary className={houdiniSummaryClass}>
               <span>Contract</span>
               <span className="truncate text-[10px] normal-case tracking-normal">{nodeContract.dataModel}</span>
             </summary>
@@ -589,8 +637,8 @@ export function Inspector() {
         ) : null}
 
         {nodeInternals ? (
-          <details className="overflow-hidden rounded-md border bg-card/50">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+          <details className={houdiniDetailsClass}>
+            <summary className={houdiniSummaryClass}>
               <span>Internals</span>
               <span className="text-[10px] normal-case tracking-normal">{nodeInternals.steps.length} steps</span>
             </summary>
@@ -601,7 +649,7 @@ export function Inspector() {
               </div>
               <div className="space-y-2">
                 {nodeInternals.steps.map((step, index) => (
-                  <div key={step.id} className="rounded-md border bg-background/50 p-2.5">
+                  <div key={step.id} className="rounded-[3px] border border-[#252a31] bg-[#090a0c]/70 p-2.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
@@ -632,8 +680,8 @@ export function Inspector() {
           </details>
         ) : null}
 
-        <details className="overflow-hidden rounded-md border bg-card/50">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+        <details className={houdiniDetailsClass}>
+          <summary className={houdiniSummaryClass}>
             <span>{nodeTemplate ? "Identity" : "Parameters"}</span>
             <span className="truncate text-[10px] normal-case tracking-normal">{data.label}</span>
           </summary>
@@ -647,6 +695,7 @@ export function Inspector() {
                 value={data.label}
                 onFocus={takeSnapshot}
                 onChange={(e) => update({ label: e.target.value })}
+                className={houdiniInputClass}
               />
             </div>
 
@@ -661,6 +710,7 @@ export function Inspector() {
                 onFocus={takeSnapshot}
                 onChange={(e) => update({ description: e.target.value })}
                 placeholder="添加描述..."
+                className={houdiniTextareaClass}
               />
             </div>
 
@@ -672,7 +722,7 @@ export function Inspector() {
                 <Textarea
                   id="node-cond"
                   rows={2}
-                  className="font-mono text-xs"
+                  className={houdiniTextareaClass}
                   value={data.condition ?? ""}
                   onFocus={takeSnapshot}
                   onChange={(e) => update({ condition: e.target.value })}
@@ -694,7 +744,7 @@ export function Inspector() {
                       value={f.value}
                       onFocus={takeSnapshot}
                       onChange={(e) => updateField(f.id, e.target.value)}
-                      className="font-mono text-xs"
+                      className={houdiniInputClass}
                     />
                   </div>
                 ))
@@ -703,8 +753,8 @@ export function Inspector() {
         </details>
 
         {data.nodeType !== "note" && data.nodeType !== "group" ? (
-          <details className="overflow-hidden rounded-md border bg-card/50">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+          <details className={houdiniDetailsClass}>
+            <summary className={houdiniSummaryClass}>
               <span>Ports</span>
               <span className="text-[10px] normal-case tracking-normal">{ports.length} ports</span>
             </summary>
@@ -733,8 +783,8 @@ export function Inspector() {
           </details>
         ) : null}
 
-        <details className="overflow-hidden rounded-md border bg-card/50">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+        <details className={houdiniDetailsClass}>
+          <summary className={houdiniSummaryClass}>
             <span>Debug</span>
             <span className="truncate text-[10px] normal-case tracking-normal">{node.id}</span>
           </summary>
