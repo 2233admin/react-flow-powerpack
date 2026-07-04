@@ -1,7 +1,7 @@
 {
   "name": "react-flow-powerpack",
   "version": "0.1.0",
-  "description": "An open-source React Flow workflow editor with Houdini-style parameter interfaces, package internals, and n8n workflow translation.",
+  "description": "A React Flow workflow IDE prototype for canonical workflow graphs, package internals, promoted parameters, and n8n JSON translation.",
   "private": false,
   "license": "MIT",
   "repository": {

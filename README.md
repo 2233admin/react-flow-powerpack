@@ -1,14 +1,45 @@
 # React Flow Powerpack
 
-An open-source Next.js + React Flow workflow editor for building node-based automation tools.
+React Flow Powerpack is a working prototype of a **workflow IDE layer** built on top of React Flow.
 
-React Flow Powerpack focuses on the engineering layer that sits below polished workflow UIs:
+The goal is not to make another box-and-edge demo, and it is not an n8n runtime clone. The project explores the missing engineering layer that many workflow products eventually need: a visual canvas whose nodes have canonical data contracts, inspectable internals, promoted parameters, source evidence, run artifacts, and import/export paths.
 
-- Houdini-style parameter interfaces backed by exposed internal node parameters.
-- Package/DOP-style nodes with inspectable internal networks.
-- Semantic edges with contracts, weights, source anchors, jump-back metadata, and run artifacts.
-- Import/export for canonical workflow JSON, Mermaid drafts, Obsidian Canvas, OPML, Markdown, PNG, and SVG.
-- n8n workflow translation: import n8n `nodes[] + connections{}` JSON and convert it into the canonical workflow model.
+In short: this repo is for people building their own workflow editor, automation canvas, agent pipeline UI, or knowledge-map workflow surface and who need more than raw React Flow primitives.
+
+## Why This Exists
+
+Most React Flow examples are good at drawing nodes and edges, but real workflow tools quickly need harder pieces:
+
+- a canonical workflow schema that is not just React component state
+- nodes that can be packaged into higher-level operators while still exposing lower-level parameters
+- an Inspector that behaves more like Houdini's Parameter Interface than a fixed task form
+- semantic edges that carry contracts, weights, source anchors, and run evidence
+- import paths from existing workflow ecosystems, especially n8n-style JSON
+- a proposal/human-accept loop for AI-generated changes instead of silent graph mutation
+
+React Flow Powerpack is an implementation playground for that layer.
+
+## What It Can Do Today
+
+- Build and edit workflow graphs on a React Flow canvas: add nodes, connect edges, group, draw, undo/redo, auto-layout, and inspect selections.
+- Keep workflow behavior in a canonical JSON model under `lib/workflow/schema.ts`, then project it into React Flow nodes and edges.
+- Add profile-aware workflow operators such as schedule triggers, JIN10 source, normalize, dedupe, summary, score, tag, route, inbox, notify, and package nodes.
+- Use Houdini-style Parameter Interface behavior: selected nodes show public parameters exposed by their internal steps; edits write back to canonical params, adapter config, or internal-node fields.
+- Dive into or unlock node internals so package/DOP nodes can be inspected as lower-level primitive networks.
+- Work with knowledge-map primitives: source anchors, jump-back metadata, mini-network previews, topic collapse, semantic links, link weights, contracts, and run artifacts.
+- Import and export canonical workflow JSON, Mermaid drafts, Obsidian Canvas, OPML, Markdown, PNG, and SVG.
+- Translate n8n workflow JSON into this project's canonical workflow shape while preserving node labels, selected parameters, connections, and redacted credential metadata.
+- Simulate and verify the included intelligence workflow path with tests, run traces, contracts, and local fixtures.
+
+## What It Is Not
+
+- It is not a production workflow execution engine.
+- It does not run arbitrary n8n integrations or replace an n8n server.
+- It is not currently packaged as a polished npm component library.
+- It is not a hosted SaaS product.
+- It does not provide real secret management; imported credential metadata is intentionally redacted.
+
+Treat it as a reference implementation and a starting point for building serious workflow-editor surfaces.
 
 ## Quick Start
 
@@ -23,7 +54,7 @@ Open http://127.0.0.1:8080/.
 
 Use **Import / Export -> Import JSON / Mermaid / n8n** and select an n8n workflow JSON file. The importer keeps the original n8n node labels, stores source metadata under `ui.n8n`, redacts credential identifiers, maps common n8n nodes into canonical trigger/source/agent/router/inbox/notify/action nodes, and preserves connections as semantic contract edges.
 
-This works with workflow JSON files from collections such as [Zie619/n8n-workflows](https://github.com/Zie619/n8n-workflows).
+This is a translation/import tool, not a runtime compatibility layer. It is useful for turning workflow collections such as [Zie619/n8n-workflows](https://github.com/Zie619/n8n-workflows) into editable graph material inside this project.
 
 ## Verify The Project
 
