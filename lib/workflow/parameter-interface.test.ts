@@ -48,6 +48,31 @@ describe("Houdini-style parameter interface", () => {
     })
   })
 
+  it("renders notification and inbox targets as declared selects instead of free text", () => {
+    const project = parseWorkflowProject(workflowFixture)
+    const flow = workflowProjectToReactFlow(project)
+    const notify = project.nodes.find((candidate) => candidate.id === "notify-preview")
+    const notifyAdapter = project.adapters.find((candidate) => candidate.id === notify?.adapter)
+    const notifyView = buildParameterInterfaceView({ node: notify, adapter: notifyAdapter, nodes: flow.nodes })
+    const inbox = project.nodes.find((candidate) => candidate.id === "inbox-review")
+    const inboxView = buildParameterInterfaceView({ node: inbox, nodes: flow.nodes })
+
+    expect(notifyView?.fields.find((field) => field.id === "target.target")).toMatchObject({
+      label: "Target",
+      type: "select",
+      value: "operator-preview",
+      options: expect.arrayContaining([
+        { value: "operator-preview", label: "Operator Preview" },
+        { value: "mock-webhook", label: "Mock Webhook" },
+      ]),
+    })
+    expect(inboxView?.fields.find((field) => field.id === "queue.queue")).toMatchObject({
+      label: "Queue",
+      type: "select",
+      value: "macro-watch",
+    })
+  })
+
   it("falls back to readonly internals summary when no public parameters are declared", () => {
     const node = parseWorkflowProject({
       id: "summary-only",

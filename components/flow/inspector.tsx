@@ -73,6 +73,11 @@ const houdiniDetailsClass = "overflow-hidden rounded-[3px] border border-[#20242
 const houdiniSummaryClass =
   "flex cursor-pointer list-none items-center justify-between gap-3 bg-[#171a1f] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground"
 
+function splitTypeLine(typeLine: string) {
+  const [kind = typeLine, version = ""] = typeLine.split("·").map((part) => part.trim())
+  return { kind, version }
+}
+
 function SectionCaption({ children }: { children: React.ReactNode }) {
   return (
     <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/70">
@@ -116,29 +121,36 @@ function PanelShell({
   onClose: () => void
   children: React.ReactNode
 }) {
+  const { kind, version } = splitTypeLine(typeLine)
+
   return (
     <aside
       data-health="inspector"
-      className="absolute bottom-3 right-3 top-3 z-40 flex w-[min(380px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border bg-sidebar/95 shadow-2xl backdrop-blur-sm duration-150 animate-in fade-in slide-in-from-right-4"
+      className="absolute bottom-3 right-3 top-3 z-40 flex w-[min(380px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[4px] border border-[#252a31] bg-[#08090b]/96 shadow-2xl backdrop-blur-sm duration-150 animate-in fade-in slide-in-from-right-4"
       aria-label="参数面板"
     >
-      <div className="flex items-start gap-2 border-b px-4 py-3">
-        <div className="min-w-0 flex-1">
-          <SectionCaption>Parameter Interface</SectionCaption>
-          <h2 className="mt-1 truncate text-sm font-medium">{title}</h2>
-          <div className="mt-0.5 flex items-center justify-between gap-2 font-mono text-[10px]">
-            <span className="truncate text-muted-foreground">{typeLine}</span>
-            <PanelStatus status={status} />
+      <div className="border-b border-[#20242a] bg-[#0d0f12] px-3 py-2">
+        <div className="grid grid-cols-[96px_minmax(0,1fr)_auto_20px] items-center gap-2">
+          <span className="flex h-7 min-w-0 items-center truncate rounded-[2px] border border-[#2a3038] bg-[#181b20] px-2 font-mono text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
+            {kind}
+          </span>
+          <div className="flex h-7 min-w-0 items-center rounded-[2px] border border-[#2a3038] bg-[#050607] px-2 shadow-inner">
+            <h2 className="truncate font-mono text-[12px] font-semibold text-foreground">{title}</h2>
           </div>
+          <PanelStatus status={status} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-5 shrink-0 items-center justify-center rounded-[2px] text-muted-foreground transition-colors hover:bg-[#20242a] hover:text-foreground"
+            aria-label="关闭参数面板"
+          >
+            <X className="size-3.5" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          aria-label="关闭参数面板"
-        >
-          <X className="size-3.5" />
-        </button>
+        <div className="mt-1 flex h-4 items-center gap-2 pl-[104px] font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground/70">
+          <span>Parameter Interface</span>
+          {version ? <span className="tracking-[0.08em]">{version}</span> : null}
+        </div>
       </div>
       <div
         data-inspector-scroll
@@ -341,22 +353,23 @@ export function Inspector() {
 
     if (field.type === "select") {
       const value = typeof raw === "string" ? raw : field.options?.[0]?.value
+      const selectedLabel = field.options?.find((option) => option.value === value)?.label ?? value ?? ""
       return row(
         field.readonly ? (
           <Input
             id={fieldId}
             readOnly
-            value={field.options?.find((option) => option.value === value)?.label ?? value ?? ""}
+            value={selectedLabel}
             className={houdiniInputClass}
           />
         ) : (
           <Select value={value} onValueChange={(next) => updateParameterField(field, next)}>
             <SelectTrigger id={fieldId} className={houdiniSelectTriggerClass}>
-              <SelectValue />
+              <span className="min-w-0 flex-1 truncate text-left">{selectedLabel}</span>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-[2px] border border-[#2c3036] bg-[#0d0f12] font-mono text-[11px]">
               {(field.options ?? []).map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={option.value} value={option.value} className="rounded-[2px] text-[11px]">
                   {option.label}
                 </SelectItem>
               ))}
@@ -506,7 +519,7 @@ export function Inspector() {
       onClose={deselectAll}
     >
       <div className="space-y-4 p-4">
-        <div className="grid grid-cols-4 gap-1 rounded-md bg-muted p-1 font-mono text-[10px] uppercase">
+        <div className="grid grid-cols-4 overflow-hidden rounded-[3px] border border-[#20242a] bg-[#171a1f] font-mono text-[10px] uppercase">
           {(["config", "prompt", "run", "trace"] as const).map((tab) => (
             <button
               key={tab}
@@ -516,8 +529,8 @@ export function Inspector() {
                 setNodeTab(tab)
               }}
               className={cn(
-                "rounded-sm px-2 py-1 transition-colors",
-                nodeTab === tab ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                "border-r border-[#2b3037] px-2 py-2 transition-colors last:border-r-0",
+                nodeTab === tab ? "bg-[#050607] text-foreground" : "text-muted-foreground hover:bg-[#252a31] hover:text-foreground",
                 tab === "prompt" && !promptCapable && "opacity-40",
               )}
             >

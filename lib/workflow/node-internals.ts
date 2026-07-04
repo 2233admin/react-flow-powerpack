@@ -228,7 +228,8 @@ const NODE_INTERNALS: Record<string, NodeInternals> = {
         }),
       ]),
       step("target", "Target", "target", "Selects preview or webhook target.", "target param", "ready", [
-        exposedParam("target", "Target", "runtime", "Runtime", "text", "operator-preview", {
+        exposedParam("target", "Target", "runtime", "Runtime", "select", "operator-preview", {
+          options: notificationTargetOptions(),
           order: 1,
           groupOrder: 2,
         }),
@@ -253,7 +254,10 @@ const NODE_INTERNALS: Record<string, NodeInternals> = {
     summary: "Writes reviewable intelligence items into a durable operator queue.",
     steps: [
       step("queue", "Queue resolver", "target", "Resolves the target review queue.", "queue param", "ready", [
-        exposedParam("queue", "Queue", "runtime", "Runtime", "text", "macro-watch", { order: 1 }),
+        exposedParam("queue", "Queue", "runtime", "Runtime", "select", "macro-watch", {
+          options: reviewQueueOptions(),
+          order: 1,
+        }),
       ]),
       step("write", "Inbox write", "send", "Persists review items into the simulated inbox.", "stored ids", "ready"),
       step("archive", "Archive policy", "cache", "Applies archive/retention settings.", "archive param", "simulated", [
@@ -474,5 +478,22 @@ function timezoneOptions() {
     { value: "Asia/Shanghai", label: "Asia/Shanghai" },
     { value: "UTC", label: "UTC" },
     { value: "America/New_York", label: "America/New_York" },
+  ]
+}
+
+function notificationTargetOptions() {
+  return [
+    { value: "operator-preview", label: "Operator Preview" },
+    { value: "mock-webhook", label: "Mock Webhook" },
+    { value: "ops-alerts", label: "Ops Alerts" },
+    { value: "human-review", label: "Human Review" },
+  ]
+}
+
+function reviewQueueOptions() {
+  return [
+    { value: "macro-watch", label: "Macro Watch" },
+    { value: "risk-review", label: "Risk Review" },
+    { value: "ops-triage", label: "Ops Triage" },
   ]
 }
