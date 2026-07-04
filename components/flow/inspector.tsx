@@ -17,10 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
 import { getNodeInternals, type NodeInternalStatus } from "@/lib/workflow/node-internals"
 import { getNodeContract } from "@/lib/workflow/node-contracts"
-import { getWorkflowProfileInspectorSections } from "@/lib/workflow/profiles"
 import { getNodeTemplate } from "@/lib/workflow/node-templates"
 import { buildParameterInterfaceView, type ParameterInterfaceViewField } from "@/lib/workflow/parameter-interface"
 import { cn } from "@/lib/utils"
@@ -109,7 +107,7 @@ function PanelShell({
   return (
     <aside
       data-health="inspector"
-      className="absolute bottom-3 right-3 top-3 z-40 flex w-72 flex-col overflow-hidden rounded-lg border bg-sidebar/95 shadow-2xl backdrop-blur-sm duration-150 animate-in fade-in slide-in-from-right-4"
+      className="absolute bottom-3 right-3 top-3 z-40 flex w-[min(380px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border bg-sidebar/95 shadow-2xl backdrop-blur-sm duration-150 animate-in fade-in slide-in-from-right-4"
       aria-label="参数面板"
     >
       <div className="flex items-start gap-2 border-b px-4 py-3">
@@ -238,9 +236,6 @@ export function Inspector() {
   const parameterInterfaceView = buildParameterInterfaceView({ node: projectNode, adapter: projectAdapter, nodes })
   const nodeInternals = getNodeInternals(projectNode)
   const nodeContract = getNodeContract(projectNode)
-  const profileSections = canonical?.kind
-    ? getWorkflowProfileInspectorSections(workflowProject.profile, canonical.kind as never)
-    : []
   const promptCapable =
     canonical?.kind === "agent" ||
     typeof data.primitiveId === "string" && (data.primitiveId.includes("prompt") || data.primitiveId.includes("model"))
@@ -279,7 +274,7 @@ export function Inspector() {
     const raw = field.value
     const fieldId = `parameter-${field.id}`
     const label = (
-      <div className="space-y-0.5">
+      <div className="space-y-1">
         <Label htmlFor={fieldId} className="font-mono text-[10px] uppercase tracking-wider">
           {field.label}
         </Label>
@@ -287,51 +282,59 @@ export function Inspector() {
       </div>
     )
     const readonlyTone = field.readonly ? "opacity-70" : ""
+    const row = (control: React.ReactNode, align = "items-start") => (
+      <div
+        key={field.id}
+        className={cn(
+          "grid grid-cols-[112px_minmax(0,1fr)] gap-3 border-b border-border/60 py-3 last:border-b-0",
+          align,
+          readonlyTone,
+        )}
+      >
+        {label}
+        <div className="min-w-0">{control}</div>
+      </div>
+    )
 
     if (field.type === "boolean") {
       const checked = raw === true || raw === "true"
-      return (
-        <div key={field.id} className={cn("flex items-center justify-between gap-3 rounded-md border bg-card p-3", readonlyTone)}>
-          {label}
+      return row(
+        <div className="flex h-8 items-center justify-end">
           <Switch
             id={fieldId}
             checked={checked}
             disabled={field.readonly}
             onCheckedChange={(checkedValue) => updateParameterField(field, checkedValue)}
           />
-        </div>
+        </div>,
+        "items-center",
       )
     }
 
     if (field.type === "select") {
       const value = typeof raw === "string" ? raw : field.options?.[0]?.value
-      return (
-        <div key={field.id} className={cn("space-y-1.5", readonlyTone)}>
-          {label}
-          {field.readonly ? (
-            <Input id={fieldId} readOnly value={field.options?.find((option) => option.value === value)?.label ?? value ?? ""} className="font-mono text-xs" />
-          ) : (
-            <Select value={value} onValueChange={(next) => updateParameterField(field, next)}>
-              <SelectTrigger id={fieldId}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(field.options ?? []).map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+      return row(
+        field.readonly ? (
+          <Input id={fieldId} readOnly value={field.options?.find((option) => option.value === value)?.label ?? value ?? ""} className="h-8 font-mono text-xs" />
+        ) : (
+          <Select value={value} onValueChange={(next) => updateParameterField(field, next)}>
+            <SelectTrigger id={fieldId} className="h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(field.options ?? []).map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ),
       )
     }
 
     if (field.type === "textarea") {
-      return (
-        <div key={field.id} className={cn("space-y-1.5", readonlyTone)}>
-          {label}
+      return row(
           <Textarea
             id={fieldId}
             rows={3}
@@ -339,8 +342,7 @@ export function Inspector() {
             className="font-mono text-xs"
             value={typeof raw === "string" ? raw : ""}
             onChange={(e) => updateParameterField(field, e.target.value)}
-          />
-        </div>
+          />,
       )
     }
 
@@ -352,66 +354,60 @@ export function Inspector() {
             ? raw.split(",").map((value) => value.trim()).filter(Boolean)
             : [],
       )
-      return (
-        <div key={field.id} className={cn("space-y-1.5", readonlyTone)}>
-          {label}
-          <div className="flex flex-wrap gap-1.5">
-            {(field.options ?? []).map((option) => {
-              const selectedToken = selectedValues.has(option.value)
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  disabled={field.readonly}
-                  onClick={() => {
-                    const next = new Set(selectedValues)
-                    if (next.has(option.value)) next.delete(option.value)
-                    else next.add(option.value)
-                    updateParameterField(field, Array.from(next))
-                  }}
-                  className={cn(
-                    "rounded-sm border px-2 py-1 font-mono text-[10px] transition-colors disabled:pointer-events-none disabled:opacity-60",
-                    selectedToken ? "border-[#ff7a17] bg-[#ff7a17]/10 text-[#ff7a17]" : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {option.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
+      return row(
+        <div className="flex flex-wrap gap-1.5">
+          {(field.options ?? []).map((option) => {
+            const selectedToken = selectedValues.has(option.value)
+            return (
+              <button
+                key={option.value}
+                type="button"
+                disabled={field.readonly}
+                onClick={() => {
+                  const next = new Set(selectedValues)
+                  if (next.has(option.value)) next.delete(option.value)
+                  else next.add(option.value)
+                  updateParameterField(field, Array.from(next))
+                }}
+                className={cn(
+                  "rounded-sm border px-2 py-1 font-mono text-[10px] transition-colors disabled:pointer-events-none disabled:opacity-60",
+                  selectedToken ? "border-[#ff7a17] bg-[#ff7a17]/10 text-[#ff7a17]" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>,
       )
     }
 
     if (field.type === "slider") {
       const value = typeof raw === "number" ? raw : Number(raw ?? field.min ?? 0)
       const safeValue = Number.isFinite(value) ? value : field.min ?? 0
-      return (
-        <div key={field.id} className={cn("space-y-2", readonlyTone)}>
-          <div className="flex items-center justify-between gap-2">
-            {label}
-            <span className="font-mono text-[11px] text-foreground">{safeValue.toFixed(2)}</span>
+      return row(
+        <div className="space-y-1.5 pt-1">
+          <div className="flex items-center gap-3">
+            <input
+              id={fieldId}
+              type="range"
+              min={field.min ?? 0}
+              max={field.max ?? 1}
+              step={field.step ?? 0.01}
+              value={safeValue}
+              disabled={field.readonly}
+              onChange={(e) => updateParameterField(field, Number(e.target.value))}
+              className="min-w-0 flex-1 accent-[#ff7a17] disabled:opacity-60"
+            />
+            <span className="w-10 text-right font-mono text-[11px] text-foreground">{safeValue.toFixed(2)}</span>
           </div>
-          <input
-            id={fieldId}
-            type="range"
-            min={field.min ?? 0}
-            max={field.max ?? 1}
-            step={field.step ?? 0.01}
-            value={safeValue}
-            disabled={field.readonly}
-            onChange={(e) => updateParameterField(field, Number(e.target.value))}
-            className="w-full accent-[#ff7a17] disabled:opacity-60"
-          />
-        </div>
+        </div>,
       )
     }
 
     if (field.type === "number") {
       const value = typeof raw === "number" ? raw : Number(raw ?? 0)
-      return (
-        <div key={field.id} className={cn("space-y-1.5", readonlyTone)}>
-          {label}
+      return row(
           <Input
             id={fieldId}
             type="number"
@@ -421,24 +417,20 @@ export function Inspector() {
             readOnly={field.readonly}
             value={Number.isFinite(value) ? value : 0}
             onChange={(e) => updateParameterField(field, Number(e.target.value))}
-            className="font-mono text-xs"
-          />
-        </div>
+            className="h-8 font-mono text-xs"
+          />,
       )
     }
 
-    return (
-      <div key={field.id} className={cn("space-y-1.5", readonlyTone)}>
-        {label}
+    return row(
         <Input
           id={fieldId}
           value={typeof raw === "string" || typeof raw === "number" ? String(raw) : ""}
           placeholder={field.placeholder}
           readOnly={field.readonly}
           onChange={(e) => updateParameterField(field, e.target.value)}
-          className="font-mono text-xs"
-        />
-      </div>
+          className="h-8 font-mono text-xs"
+        />,
     )
   }
 
@@ -534,26 +526,9 @@ export function Inspector() {
           </div>
         ) : (
           <>
-        {profileSections.length > 0 ? (
-          <div className="space-y-2">
-            <SectionCaption>Profile Sections</SectionCaption>
-            <div className="flex flex-wrap gap-1.5">
-              {profileSections.map((section) => (
-                <Badge key={section} variant="secondary" className="font-mono text-[10px]">
-                  {section}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
         {parameterInterfaceView ? (
-          <div className="space-y-3 rounded-md border bg-card p-3">
-            <div className="space-y-1">
-              <SectionCaption>{parameterInterfaceView.title}</SectionCaption>
-              <p className="text-[11px] leading-relaxed text-muted-foreground">{parameterInterfaceView.summary}</p>
-            </div>
-            <div className="flex flex-wrap gap-1 rounded-md bg-muted p-1 font-mono text-[10px] uppercase">
+          <div className="overflow-hidden rounded-md border bg-card/60">
+            <div className="flex flex-wrap gap-1 border-b bg-muted/60 p-1 font-mono text-[10px] uppercase">
               {parameterGroups.map((group) => (
                 <button
                   key={group.id}
@@ -568,153 +543,172 @@ export function Inspector() {
                 </button>
               ))}
             </div>
-            <Separator />
-            <div className="space-y-3">{activeParameterFields.map((field) => renderParameterField(field))}</div>
+            <div className="px-3">{activeParameterFields.map((field) => renderParameterField(field))}</div>
+            {activeParameterFields.length === 0 ? (
+              <p className="px-3 py-4 text-[11px] text-muted-foreground">No public parameters in this group.</p>
+            ) : null}
           </div>
         ) : null}
 
         {nodeContract ? (
-          <div className="space-y-3 rounded-md border bg-card p-3">
-            <div className="space-y-1">
-              <SectionCaption>Contract</SectionCaption>
-              <h3 className="text-xs font-medium text-foreground">{nodeContract.title}</h3>
-              <p className="font-mono text-[10px] text-muted-foreground">{nodeContract.dataModel}</p>
+          <details className="overflow-hidden rounded-md border bg-card/50">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+              <span>Contract</span>
+              <span className="truncate text-[10px] normal-case tracking-normal">{nodeContract.dataModel}</span>
+            </summary>
+            <div className="space-y-3 border-t p-3">
+              <div className="space-y-1">
+                <h3 className="text-xs font-medium text-foreground">{nodeContract.title}</h3>
+                <p className="font-mono text-[10px] text-muted-foreground">{nodeContract.dataModel}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <MonoRow k="ports" v={nodeContract.ports.length} />
+                <MonoRow k="params" v={nodeContract.params.length} />
+              </div>
+              <Separator />
+              <div className="space-y-1.5">
+                {nodeContract.params.slice(0, 4).map((param) => (
+                  <div key={param.id} className="flex items-center justify-between gap-2 font-mono text-[10px]">
+                    <span className="truncate text-foreground">{param.id}</span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {param.source} · {param.type}{param.required ? " · required" : ""}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <Separator />
+              <div className="space-y-1">
+                {nodeContract.assertions.slice(0, 3).map((assertion) => (
+                  <p key={assertion} className="line-clamp-1 text-[11px] text-muted-foreground">
+                    {assertion}
+                  </p>
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <MonoRow k="ports" v={nodeContract.ports.length} />
-              <MonoRow k="params" v={nodeContract.params.length} />
-            </div>
-            <Separator />
-            <div className="space-y-1.5">
-              {nodeContract.params.slice(0, 4).map((param) => (
-                <div key={param.id} className="flex items-center justify-between gap-2 font-mono text-[10px]">
-                  <span className="truncate text-foreground">{param.id}</span>
-                  <span className="shrink-0 text-muted-foreground">
-                    {param.source} · {param.type}{param.required ? " · required" : ""}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <Separator />
-            <div className="space-y-1">
-              {nodeContract.assertions.slice(0, 3).map((assertion) => (
-                <p key={assertion} className="line-clamp-1 text-[11px] text-muted-foreground">
-                  {assertion}
-                </p>
-              ))}
-            </div>
-          </div>
+          </details>
         ) : null}
 
         {nodeInternals ? (
-          <div className="space-y-3 rounded-md border bg-card p-3">
-            <div className="space-y-1">
-              <SectionCaption>Internals</SectionCaption>
-              <h3 className="text-xs font-medium text-foreground">{nodeInternals.title}</h3>
-              <p className="text-[11px] leading-relaxed text-muted-foreground">{nodeInternals.summary}</p>
-            </div>
-            <div className="space-y-2">
-              {nodeInternals.steps.map((step, index) => (
-                <div key={step.id} className="rounded-md border bg-background/50 p-2.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] text-muted-foreground">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <p className="truncate text-xs font-medium text-foreground">{step.label}</p>
+          <details className="overflow-hidden rounded-md border bg-card/50">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+              <span>Internals</span>
+              <span className="text-[10px] normal-case tracking-normal">{nodeInternals.steps.length} steps</span>
+            </summary>
+            <div className="space-y-3 border-t p-3">
+              <div className="space-y-1">
+                <h3 className="text-xs font-medium text-foreground">{nodeInternals.title}</h3>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">{nodeInternals.summary}</p>
+              </div>
+              <div className="space-y-2">
+                {nodeInternals.steps.map((step, index) => (
+                  <div key={step.id} className="rounded-md border bg-background/50 p-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <p className="truncate text-xs font-medium text-foreground">{step.label}</p>
+                        </div>
+                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{step.description}</p>
                       </div>
-                      <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{step.description}</p>
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-sm border px-1.5 py-0.5 font-mono text-[9px]",
+                          internalStatusClass[step.status],
+                        )}
+                      >
+                        {internalStatusLabel[step.status]}
+                      </span>
                     </div>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-sm border px-1.5 py-0.5 font-mono text-[9px]",
-                        internalStatusClass[step.status],
-                      )}
-                    >
-                      {internalStatusLabel[step.status]}
-                    </span>
+                    <div className="mt-2 flex items-center justify-between gap-2 font-mono text-[10px] text-muted-foreground/80">
+                      <span>{step.capability}</span>
+                      <span className="truncate">{step.evidence}</span>
+                    </div>
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-2 font-mono text-[10px] text-muted-foreground/80">
-                    <span>{step.capability}</span>
-                    <span className="truncate">{step.evidence}</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          </details>
         ) : null}
 
-        <div className="space-y-3">
-          <SectionCaption>{nodeTemplate ? "Identity" : "Parameters"}</SectionCaption>
-          <div className="space-y-1.5">
-            <Label htmlFor="node-label" className="font-mono text-[10px] uppercase tracking-wider">
-              Name
-            </Label>
-            <Input
-              id="node-label"
-              value={data.label}
-              onFocus={takeSnapshot}
-              onChange={(e) => update({ label: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="node-desc" className="font-mono text-[10px] uppercase tracking-wider">
-              Description
-            </Label>
-            <Textarea
-              id="node-desc"
-              rows={3}
-              value={data.description ?? ""}
-              onFocus={takeSnapshot}
-              onChange={(e) => update({ description: e.target.value })}
-              placeholder="添加描述..."
-            />
-          </div>
-
-          {isCondition ? (
+        <details className="overflow-hidden rounded-md border bg-card/50">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+            <span>{nodeTemplate ? "Identity" : "Parameters"}</span>
+            <span className="truncate text-[10px] normal-case tracking-normal">{data.label}</span>
+          </summary>
+          <div className="space-y-3 border-t p-3">
             <div className="space-y-1.5">
-              <Label htmlFor="node-cond" className="font-mono text-[10px] uppercase tracking-wider">
-                Expression
+              <Label htmlFor="node-label" className="font-mono text-[10px] uppercase tracking-wider">
+                Name
               </Label>
-              <Textarea
-                id="node-cond"
-                rows={2}
-                className="font-mono text-xs"
-                value={data.condition ?? ""}
+              <Input
+                id="node-label"
+                value={data.label}
                 onFocus={takeSnapshot}
-                onChange={(e) => update({ condition: e.target.value })}
+                onChange={(e) => update({ label: e.target.value })}
               />
             </div>
-          ) : null}
 
-          {!nodeTemplate && data.fields && data.fields.length > 0
-            ? data.fields.map((f: FieldConfig) => (
-                <div key={f.id} className="space-y-1.5">
-                  <Label
-                    htmlFor={`field-${f.id}`}
-                    className="font-mono text-[10px] uppercase tracking-wider"
-                  >
-                    {f.label}
-                  </Label>
-                  <Input
-                    id={`field-${f.id}`}
-                    value={f.value}
-                    onFocus={takeSnapshot}
-                    onChange={(e) => updateField(f.id, e.target.value)}
-                    className="font-mono text-xs"
-                  />
-                </div>
-              ))
-            : null}
-        </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="node-desc" className="font-mono text-[10px] uppercase tracking-wider">
+                Description
+              </Label>
+              <Textarea
+                id="node-desc"
+                rows={3}
+                value={data.description ?? ""}
+                onFocus={takeSnapshot}
+                onChange={(e) => update({ description: e.target.value })}
+                placeholder="添加描述..."
+              />
+            </div>
+
+            {isCondition ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="node-cond" className="font-mono text-[10px] uppercase tracking-wider">
+                  Expression
+                </Label>
+                <Textarea
+                  id="node-cond"
+                  rows={2}
+                  className="font-mono text-xs"
+                  value={data.condition ?? ""}
+                  onFocus={takeSnapshot}
+                  onChange={(e) => update({ condition: e.target.value })}
+                />
+              </div>
+            ) : null}
+
+            {!nodeTemplate && data.fields && data.fields.length > 0
+              ? data.fields.map((f: FieldConfig) => (
+                  <div key={f.id} className="space-y-1.5">
+                    <Label
+                      htmlFor={`field-${f.id}`}
+                      className="font-mono text-[10px] uppercase tracking-wider"
+                    >
+                      {f.label}
+                    </Label>
+                    <Input
+                      id={`field-${f.id}`}
+                      value={f.value}
+                      onFocus={takeSnapshot}
+                      onChange={(e) => updateField(f.id, e.target.value)}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                ))
+              : null}
+          </div>
+        </details>
 
         {data.nodeType !== "note" && data.nodeType !== "group" ? (
-          <>
-            <Separator />
-            <div className="space-y-1.5 rounded-md border bg-card p-3">
-              <SectionCaption>Ports</SectionCaption>
+          <details className="overflow-hidden rounded-md border bg-card/50">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+              <span>Ports</span>
+              <span className="text-[10px] normal-case tracking-normal">{ports.length} ports</span>
+            </summary>
+            <div className="space-y-1.5 border-t p-3">
               {ports.map((p) => (
                 <div
                   key={`${p.dir}-${p.name}`}
@@ -736,16 +730,20 @@ export function Inspector() {
                 </div>
               ))}
             </div>
-          </>
+          </details>
         ) : null}
 
-        <Separator />
-        <div className="space-y-1.5 rounded-md border bg-card p-3">
-          <SectionCaption>Debug</SectionCaption>
-          <MonoRow k="id" v={node.id} />
-          <MonoRow k="pos" v={`${Math.round(node.position.x)}, ${Math.round(node.position.y)}`} />
-          {node.parentId ? <MonoRow k="parent" v={node.parentId} /> : null}
-        </div>
+        <details className="overflow-hidden rounded-md border bg-card/50">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+            <span>Debug</span>
+            <span className="truncate text-[10px] normal-case tracking-normal">{node.id}</span>
+          </summary>
+          <div className="space-y-1.5 border-t p-3">
+            <MonoRow k="id" v={node.id} />
+            <MonoRow k="pos" v={`${Math.round(node.position.x)}, ${Math.round(node.position.y)}`} />
+            {node.parentId ? <MonoRow k="parent" v={node.parentId} /> : null}
+          </div>
+        </details>
           </>
         )}
       </div>
